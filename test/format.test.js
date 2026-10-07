@@ -27,3 +27,8 @@ test("requires a positive native balance for gas readiness", () => {
   assert.equal(isPositiveBalance("0x0"), false);
   assert.equal(isPositiveBalance("0x1"), true);
 });
+
+test('retains tiny positive amounts at native accounting precision', () => {
+  assert.equal(formatNativeUsdc('0x1', 18), '0.000000000000000001');
+  assert.equal(formatNativeUsdc('0xde0b6b3a7640001', 18), '1.000000000000000001');
+});

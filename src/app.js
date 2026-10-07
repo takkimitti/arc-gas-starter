@@ -1,182 +1,72 @@
-import { ARC_ADD_CHAIN_PARAMS, ARC_MAINNET } from "./config.js";
-import {
-  formatNativeUsdc,
-  isPositiveBalance,
-  shortenAddress,
-} from "./format.js";
-const el = {
-  connectButton: document.querySelector("#connect-button"),
-  switchButton: document.querySelector("#switch-button"),
-  connectionStatus: document.querySelector("#connection-status"),
-  message: document.querySelector("#message"),
-  networkValue: document.querySelector("#network-value"),
-  networkBadge: document.querySelector("#network-badge"),
-  walletValue: document.querySelector("#wallet-value"),
-  explorerLink: document.querySelector("#explorer-link"),
-  balanceValue: document.querySelector("#balance-value"),
-  gasValue: document.querySelector("#gas-value"),
-  gasBadge: document.querySelector("#gas-badge"),
-};
-const provider = window.ethereum;
-function setBadge(node, text, tone) {
-  node.textContent = text;
-  node.className = `badge ${tone}`;
-}
-function showMessage(text, tone = "error") {
-  el.message.textContent = text;
-  el.message.className = `message ${tone}`;
-  el.message.hidden = false;
-}
-function clearMessage() {
-  el.message.hidden = true;
-  el.message.textContent = "";
-}
-function resetBalance() {
-  el.balanceValue.textContent = "—";
-  el.gasValue.textContent = "—";
-  setBadge(el.gasBadge, "Not checked", "neutral");
-}
-function renderDisconnected() {
-  el.connectionStatus.textContent = provider
-    ? "Not connected"
-    : "Wallet not detected";
-  el.connectButton.disabled = !provider;
-  el.connectButton.textContent = provider
-    ? "Connect Wallet"
-    : "Install a wallet";
-  el.networkValue.textContent = "—";
-  setBadge(el.networkBadge, "Connect wallet", "neutral");
-  el.walletValue.textContent = "—";
-  el.walletValue.title = "";
-  el.explorerLink.hidden = true;
-  el.switchButton.hidden = true;
-  resetBalance();
-  if (!provider)
-    showMessage(
-      "No EIP-1193 wallet was found. Install MetaMask or another compatible browser wallet.",
-      "info",
-    );
-}
-async function refresh() {
-  if (!provider) {
-    renderDisconnected();
-    return;
-  }
-  clearMessage();
-  const [accounts, chainIdHex] = await Promise.all([
-    provider.request({ method: "eth_accounts" }),
-    provider.request({ method: "eth_chainId" }),
-  ]);
-  if (!accounts.length) {
-    renderDisconnected();
-    return;
-  }
-  const address = accounts[0];
-  const chainId = Number.parseInt(chainIdHex, 16);
-  const isArc = chainId === ARC_MAINNET.chainId;
-  el.connectionStatus.textContent = "Connected";
-  el.connectButton.textContent = "Connected";
-  el.connectButton.disabled = true;
-  el.walletValue.textContent = shortenAddress(address);
-  el.walletValue.title = address;
-  el.explorerLink.href = `${ARC_MAINNET.explorerUrl}/address/${address}`;
-  el.explorerLink.hidden = !isArc;
-  el.networkValue.textContent = isArc
-    ? ARC_MAINNET.chainName
-    : `Chain ID ${chainId}`;
-  setBadge(
-    el.networkBadge,
-    isArc ? "Arc Mainnet ✓" : "Wrong Network",
-    isArc ? "success" : "warning",
-  );
-  el.switchButton.hidden = isArc;
-  if (!isArc) {
-    resetBalance();
-    return;
-  }
-  const hexBalance = await provider.request({
-    method: "eth_getBalance",
-    params: [address, "latest"],
+import { ARC_MAINNET, OFFICIAL_GUIDE } from './config.js';
+import { formatNativeUsdc, shortenAddress } from './format.js';
+import { createOnboarding, guidance, EXAMPLE_GAS } from './onboarding.js';
+import { discoverWallets } from './wallets.js';
+const el = Object.fromEntries(['wallet-select', 'next-title', 'next-action', 'official-guide', 'message', 'network-value', 'wallet-value', 'balance-value', 'fee-value', 'checked-at', 'refresh-button'].map(id => [id, document.getElementById(id)]));
+const steps = [...document.querySelectorAll('[data-step]')];
+let wallets = [];
+let explicitlySelected = false;
+function render(state) {
+  const next = guidance(state);
+  el['next-title'].textContent = state.busy ? 'Checking your wallet…' : next.title;
+  steps.forEach((node, index) => {
+    node.dataset.status = index < next.step ? 'complete' : index === next.step ? 'current' : 'pending';
+    if (index === next.step) node.setAttribute('aria-current', 'step'); else node.removeAttribute('aria-current');
+    node.querySelector('span').textContent = index < next.step ? 'Complete' : index === next.step ? 'Current step' : 'Upcoming';
   });
-  const gasReady = isPositiveBalance(hexBalance);
-  el.balanceValue.textContent = `${formatNativeUsdc(hexBalance)} USDC`;
-  el.gasValue.textContent = gasReady ? "Ready" : "Funding needed";
-  setBadge(
-    el.gasBadge,
-    gasReady ? "Gas Ready ✓" : "USDC Required",
-    gasReady ? "success" : "warning",
-  );
+  const external = next.action === 'wallet' || next.action === 'fund';
+  el['next-action'].hidden = external;
+  el['next-action'].textContent = next.label;
+  el['next-action'].disabled = state.busy;
+  el['official-guide'].hidden = !external;
+  el['official-guide'].href = OFFICIAL_GUIDE;
+  el['official-guide'].textContent = next.label;
+  el['wallet-select'].disabled = state.busy || wallets.length === 0;
+  el['refresh-button'].disabled = state.busy || !state.provider;
+  el.message.hidden = !state.error;
+  el.message.textContent = state.error;
+  el['network-value'].textContent = state.chainId === ARC_MAINNET.chainId ? 'Arc Mainnet' : state.chainId === null ? '—' : `Wrong network (chain ${state.chainId})`;
+  el['wallet-value'].textContent = state.account ? shortenAddress(state.account) : 'Not connected';
+  el['balance-value'].textContent = state.balance === null ? '—' : `${formatNativeUsdc(state.balance, 18)} USDC`;
+  el['fee-value'].textContent = state.gasPrice === null ? 'Unavailable' : `${formatNativeUsdc(state.gasPrice * EXAMPLE_GAS, 18)} USDC`;
+  el['checked-at'].textContent = state.checkedAt ? `Last check: ${new Date(state.checkedAt).toLocaleTimeString()}. Refresh before continuing.` : 'Fees and balance are checked only on Arc Mainnet.';
 }
-async function connectWallet() {
-  if (!provider) return;
-  clearMessage();
-  el.connectButton.disabled = true;
-  el.connectButton.textContent = "Connecting...";
-  try {
-    await provider.request({ method: "eth_requestAccounts" });
-    await refresh();
-  } catch (error) {
-    el.connectButton.disabled = false;
-    el.connectButton.textContent = "Connect Wallet";
-    showMessage(
-      error?.code === 4001
-        ? "Wallet connection was cancelled."
-        : "Unable to connect to the wallet.",
-    );
-  }
+const controller = createOnboarding(render);
+el['next-action'].addEventListener('click', () => {
+  explicitlySelected = true;
+  const action = guidance(controller.getState()).action;
+  if (action === 'connect') void controller.connect();
+  else if (action === 'switch') void controller.switchChain();
+  else void controller.refresh();
+});
+el['refresh-button'].addEventListener('click', () => { void controller.refresh(); });
+el['wallet-select'].addEventListener('change', () => {
+  explicitlySelected = true;
+  void controller.select(wallets[Number(el['wallet-select'].value)]?.provider || null);
+});
+render(controller.getState());
+discoverWallets(window, found => {
+  const selected = controller.getState().provider;
+  const previousWallet = wallets.find(wallet => wallet.provider === selected);
+  wallets = found;
+  const retained = wallets.find(wallet => wallet.provider === selected) || wallets.find(wallet => wallet.id === previousWallet?.id);
+  const nextWallet = explicitlySelected ? retained : wallets.find(wallet => wallet.source === 'eip6963') || retained || wallets[0];
+  el['wallet-select'].replaceChildren(...wallets.map((wallet, index) => {
+    const option = document.createElement('option');
+    option.value = String(index);
+    option.textContent = wallet.name;
+    option.selected = wallet === nextWallet;
+    return option;
+  }));
+  if (nextWallet && nextWallet.provider !== selected) void controller.select(nextWallet.provider);
+  else render(controller.getState());
+});
+
+// Browser/extension suspension can miss events while the page is backgrounded.
+// Reconcile once on return; no timers, polling, or permission prompts.
+function reconcileOnReturn() {
+  const state = controller.getState();
+  if (document.visibilityState !== 'hidden' && state.provider && !state.busy) void controller.refresh();
 }
-async function switchToArc() {
-  if (!provider) return;
-  clearMessage();
-  el.switchButton.disabled = true;
-  el.switchButton.textContent = "Switching...";
-  let shouldRefresh = false;
-  try {
-    await provider.request({
-      method: "wallet_switchEthereumChain",
-      params: [{ chainId: ARC_MAINNET.chainIdHex }],
-    });
-    shouldRefresh = true;
-  } catch (error) {
-    if (error?.code === 4902) {
-      try {
-        await provider.request({
-          method: "wallet_addEthereumChain",
-          params: [ARC_ADD_CHAIN_PARAMS],
-        });
-        shouldRefresh = true;
-      } catch (addError) {
-        showMessage(
-          addError?.code === 4001
-            ? "Adding Arc Mainnet was cancelled."
-            : "Arc Mainnet could not be added to this wallet.",
-        );
-      }
-    } else {
-      showMessage(
-        error?.code === 4001
-          ? "Network switch was cancelled."
-          : "Unable to switch networks automatically.",
-      );
-    }
-  } finally {
-    el.switchButton.disabled = false;
-    el.switchButton.textContent = "Switch to Arc Mainnet";
-    if (shouldRefresh) {
-      await refresh().catch(() =>
-        showMessage("Wallet state could not be refreshed."),
-      );
-    }
-  }
-}
-el.connectButton.addEventListener("click", connectWallet);
-el.switchButton.addEventListener("click", switchToArc);
-if (provider?.on) {
-  provider.on("accountsChanged", () =>
-    refresh().catch(() => showMessage("Wallet state could not be refreshed.")),
-  );
-  provider.on("chainChanged", () =>
-    refresh().catch(() => showMessage("Wallet state could not be refreshed.")),
-  );
-}
-refresh().catch(() => showMessage("Wallet state could not be read."));
+window.addEventListener('focus', reconcileOnReturn);
+document.addEventListener('visibilitychange', reconcileOnReturn);

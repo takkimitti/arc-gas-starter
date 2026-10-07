@@ -13,3 +13,6 @@ export const ARC_ADD_CHAIN_PARAMS = Object.freeze({
   rpcUrls: [ARC_MAINNET.rpcUrl],
   blockExplorerUrls: [ARC_MAINNET.explorerUrl],
 });
+
+// Official documentation root: no unverified third-party funding destinations.
+export const OFFICIAL_GUIDE = 'https://docs.arc.io';
