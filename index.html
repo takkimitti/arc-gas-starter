@@ -3,79 +3,43 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <meta
-      name="description"
-      content="Check whether your wallet is ready to use Arc Mainnet gas."
-    />
-    <title>Arc Gas Starter</title>
+    <meta name="description" content="A read-only guide to connecting a wallet, switching to Arc, and checking native USDC fee readiness." />
+    <title>Arc Gas Starter — Guided Onboarding</title>
     <link rel="stylesheet" href="./src/styles.css" />
   </head>
   <body>
     <main class="shell">
-      <section class="hero" aria-labelledby="page-title">
-        <p class="eyebrow">READ ONLY · VERSION 0.1</p>
-        <h1 id="page-title">Arc Gas Starter</h1>
-        <p class="intro">
-          Check whether your wallet is connected to Arc Mainnet and has native
-          USDC available for gas.
-        </p>
-      </section>
-      <section class="panel" aria-live="polite">
-        <div class="connection-row">
-          <div>
-            <p class="label">Wallet connection</p>
-            <p id="connection-status" class="connection-status">
-              Not connected
-            </p>
-          </div>
-          <button id="connect-button" class="primary-button" type="button">
-            Connect Wallet
-          </button>
+      <header class="hero">
+        <p class="eyebrow">READ ONLY · VERSION 0.2</p>
+        <h1>Get started on Arc</h1>
+        <p class="intro">One step at a time. Connect your wallet, switch to Arc, and check your USDC for gas.</p>
+      </header>
+      <ol class="steps" aria-label="Onboarding progress">
+        <li data-step="0">1. Connect <span>Current step</span></li>
+        <li data-step="1">2. Switch to Arc <span>Upcoming</span></li>
+        <li data-step="2">3. Fund <span>Upcoming</span></li>
+        <li data-step="3">4. Ready <span>Upcoming</span></li>
+      </ol>
+      <section class="panel" aria-labelledby="next-heading">
+        <div class="wallet-picker"><label for="wallet-select">Wallet</label><select id="wallet-select" disabled><option>No wallet detected</option></select></div>
+        <div class="next-step" aria-live="polite" aria-atomic="true">
+          <h2 id="next-heading">Your next step</h2>
+          <p id="next-title">Choose a compatible wallet</p>
+          <button id="next-action" class="primary-button" type="button" hidden>Connect wallet</button>
+          <a id="official-guide" class="primary-button" href="https://docs.arc.io" target="_blank" rel="noopener noreferrer">Wallet setup guide</a>
         </div>
-        <div id="message" class="message" role="status" hidden></div>
+        <p id="message" class="message error" role="status" hidden></p>
         <dl class="status-grid">
-          <div class="status-card">
-            <dt>Network</dt>
-            <dd id="network-value">—</dd>
-            <span id="network-badge" class="badge neutral">Connect wallet</span
-            ><button
-              id="switch-button"
-              class="secondary-button"
-              type="button"
-              hidden
-            >
-              Switch to Arc Mainnet
-            </button>
-          </div>
-          <div class="status-card">
-            <dt>Wallet</dt>
-            <dd id="wallet-value" title="">—</dd>
-            <a
-              id="explorer-link"
-              class="text-link"
-              href="https://explorer.arc.io"
-              target="_blank"
-              rel="noopener noreferrer"
-              hidden
-              >View on Explorer ↗</a
-            >
-          </div>
-          <div class="status-card">
-            <dt>Native USDC</dt>
-            <dd id="balance-value">—</dd>
-            <span class="hint">Native balance · 18 decimals</span>
-          </div>
-          <div class="status-card">
-            <dt>Gas Status</dt>
-            <dd id="gas-value">—</dd>
-            <span id="gas-badge" class="badge neutral">Not checked</span>
-          </div>
+          <div class="status-card"><dt>Network</dt><dd id="network-value">—</dd></div>
+          <div class="status-card"><dt>Wallet</dt><dd id="wallet-value">Not connected</dd></div>
+          <div class="status-card"><dt>USDC balance</dt><dd id="balance-value">—</dd><p class="hint">Native gas accounting uses 18 decimals. Native and ERC-20 USDC share one underlying balance.</p></div>
+          <div class="status-card"><dt>Current fee example</dt><dd id="fee-value">Unavailable</dd><p class="hint">Current gas price × 21,000 gas. A simple operation example, not a quote or guarantee. Contracts may use much more gas; fees change.</p></div>
         </dl>
+        <div class="check-row"><p id="checked-at">Fees and balance are checked only on Arc Mainnet.</p><button id="refresh-button" class="secondary-button" type="button" disabled>Refresh check</button></div>
       </section>
-      <p class="safety-note">
-        This app only reads your public wallet address, current network, and
-        native balance. It never sends a transaction or requests a signature.
-      </p>
+      <aside class="funding-note"><h2>Need USDC on Arc?</h2><p>Use the <a href="https://docs.arc.io" target="_blank" rel="noopener noreferrer">official Arc onboarding documentation (opens a new tab)</a> to find current funding instructions. Confirm Arc Mainnet and your destination wallet in the official guide. This app never moves funds.</p></aside>
+      <p class="safety-note">This app reads wallet state and current fees. It only asks permission to connect or switch/add Arc. It never transfers assets, approves tokens, requests signatures, or stores wallet addresses. No analytics are sent.</p>
+      <noscript><p>Enable JavaScript to use wallet checks. Official documentation links remain available.</p></noscript>
     </main>
     <script type="module" src="./src/app.js"></script>
   </body>
