@@ -5,6 +5,7 @@ import { discoverWallets } from './wallets.js';
 const el = Object.fromEntries(['wallet-select', 'next-title', 'next-action', 'official-guide', 'message', 'network-value', 'wallet-value', 'balance-value', 'fee-value', 'checked-at', 'refresh-button'].map(id => [id, document.getElementById(id)]));
 const steps = [...document.querySelectorAll('[data-step]')];
 let wallets = [];
+let explicitlySelected = false;
 function render(state) {
   const next = guidance(state);
   el['next-title'].textContent = state.busy ? 'Checking your wallet…' : next.title;
@@ -32,24 +33,40 @@ function render(state) {
 }
 const controller = createOnboarding(render);
 el['next-action'].addEventListener('click', () => {
+  explicitlySelected = true;
   const action = guidance(controller.getState()).action;
   if (action === 'connect') void controller.connect();
   else if (action === 'switch') void controller.switchChain();
   else void controller.refresh();
 });
 el['refresh-button'].addEventListener('click', () => { void controller.refresh(); });
-el['wallet-select'].addEventListener('change', () => { void controller.select(wallets[Number(el['wallet-select'].value)]?.provider || null); });
+el['wallet-select'].addEventListener('change', () => {
+  explicitlySelected = true;
+  void controller.select(wallets[Number(el['wallet-select'].value)]?.provider || null);
+});
 render(controller.getState());
 discoverWallets(window, found => {
   const selected = controller.getState().provider;
+  const previousWallet = wallets.find(wallet => wallet.provider === selected);
   wallets = found;
+  const retained = wallets.find(wallet => wallet.provider === selected) || wallets.find(wallet => wallet.id === previousWallet?.id);
+  const nextWallet = explicitlySelected ? retained : wallets.find(wallet => wallet.source === 'eip6963') || retained || wallets[0];
   el['wallet-select'].replaceChildren(...wallets.map((wallet, index) => {
     const option = document.createElement('option');
     option.value = String(index);
     option.textContent = wallet.name;
-    option.selected = selected ? wallet.provider === selected : index === 0;
+    option.selected = wallet === nextWallet;
     return option;
   }));
-  if (!selected && wallets.length) void controller.select(wallets[0].provider);
+  if (nextWallet && nextWallet.provider !== selected) void controller.select(nextWallet.provider);
   else render(controller.getState());
 });
+
+// Browser/extension suspension can miss events while the page is backgrounded.
+// Reconcile once on return; no timers, polling, or permission prompts.
+function reconcileOnReturn() {
+  const state = controller.getState();
+  if (document.visibilityState !== 'hidden' && state.provider && !state.busy) void controller.refresh();
+}
+window.addEventListener('focus', reconcileOnReturn);
+document.addEventListener('visibilitychange', reconcileOnReturn);

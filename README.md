@@ -4,13 +4,13 @@ A small, dependency-free, read-only utility that guides first-time Arc users thr
 
 ## What v0.2 does
 
-- Discover EIP-6963 wallets and legacy EIP-1193 injected providers (including multiple legacy providers). Choose a wallet with a labeled selector. Provider names are rendered as plain text; remote wallet icons are not loaded. Discovery names are not a trust guarantee.
+- Discover EIP-6963 wallets and legacy EIP-1193 injected providers (including multiple legacy providers). Choose a wallet with a labeled selector. EIP-6963 announcements take priority over an automatic legacy choice, including delayed announcements; an explicit user choice is retained. The exact selected provider object receives both RPC calls and event subscriptions. Repeated announcements do not duplicate listeners. Provider names are rendered as plain text; remote wallet icons are not loaded. Discovery names are not a trust guarantee.
 - Read existing connection state without prompting; request account access only when Connect is clicked.
 - Offer Switch to Arc on the wrong network, adding the network only when the wallet reports unknown chain (4902). Rejection is recoverable.
 - Read one USDC balance on Arc. Native USDC and ERC-20 USDC share the same underlying balance, so there is no second token balance. Native gas accounting uses 18 decimals, displayed without losing tiny positive amounts.
 - Read the selected wallet's current Arc `eth_gasPrice`. Show **gas price × 21,000 gas** in USDC as a simple operation example. This is not an actual transaction estimate, official minimum balance, or guarantee. Contract interactions may need much more gas. No fixed gas-price or Mainnet fee threshold is used.
 - Show Fund for zero balance or a balance below this current example. Show Ready only when the balance covers the example. If balance or fees cannot be checked, offer Retry and leave readiness unconfirmed.
-- React to account/chain/disconnect events, clear stale balance/fee data, remove listeners when changing wallets, and ignore late responses from previous checks. A manual Refresh rechecks current data; the last-check time is shown. There is no polling, so refresh before continuing.
+- React to account/chain/disconnect events, clear stale balance/fee data, remove listeners when changing wallets, and ignore late responses from previous checks. A valid `chainChanged` payload updates the network and clears balance/fee data immediately, without trusting a potentially cached `eth_chainId` response. On browser focus or return to a visible tab, recheck state once to reconcile events missed during browser/extension suspension; this does not request account access. A manual Refresh also rechecks current data; the last-check time is shown. There are no polling timers, so refresh before continuing.
 - Link only to the official Arc documentation root for wallet setup and current funding instructions. This is a documentation handoff, not an integrated bridge, swap, faucet, or direct funding service.
 - Support mobile layouts, keyboard focus, native controls, text-labeled step status with `aria-current`, polite status announcements, and reduced motion.
 
@@ -55,6 +55,6 @@ Open localhost port 4173 in a local browser with an EIP-1193 wallet. `dist/` is 
 
 ## Validation
 
-`npm test` uses Node's built-in runner. Tests cover formatting and network configuration; no wallet; unconnected wallet; wrong network; Arc connection; zero, tiny positive, and sufficient balances; changing gas prices; RPC failures; account/chain/disconnect events; switch/add-chain refusal and success; provider discovery and cleanup; and stale asynchronous responses. Provider integration tests use simulated wallets and do not call Mainnet or move assets.
+`npm test` uses Node's built-in runner. Tests cover formatting and network configuration; no wallet; unconnected wallet; wrong network; Arc connection; zero, tiny positive, and sufficient balances; changing gas prices; RPC failures; account/chain/disconnect events; switch/add-chain refusal and success; provider discovery and cleanup; delayed EIP-6963 announcements and provider replacement; chain events with stale RPC responses; focus/visibility reconciliation; and stale asynchronous responses. Provider integration tests use simulated wallets and do not call Mainnet or move assets.
 
 Build and local HTTP checks validate static output. Automated DOM tests exercise the rendered next action and step states using a lightweight DOM fixture, not a real browser. Manual validation is still required with actual wallet extensions, keyboard/screen readers, and mobile browsers.

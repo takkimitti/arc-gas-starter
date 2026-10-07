@@ -12,7 +12,7 @@ test('rendered UI covers onboarding, retries, rejection, and wallet changes', as
   const ids = ['wallet-select', 'next-title', 'next-action', 'official-guide', 'message', 'network-value', 'wallet-value', 'balance-value', 'fee-value', 'checked-at', 'refresh-button'];
   const nodes = Object.fromEntries(ids.map(id => [id, new NodeFixture()]));
   const steps = Array.from({ length: 4 }, () => new NodeFixture());
-  const document = { getElementById: id => nodes[id], querySelectorAll: () => steps, createElement: () => new NodeFixture() };
+  const document = Object.assign(new EventTarget(), { visibilityState: 'visible', getElementById: id => nodes[id], querySelectorAll: () => steps, createElement: () => new NodeFixture() });
   const window = new EventTarget(); window.Event = Event;
   const oldDocument = globalThis.document, oldWindow = globalThis.window;
   globalThis.document = document; globalThis.window = window;

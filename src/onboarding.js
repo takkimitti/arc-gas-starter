@@ -21,22 +21,28 @@ export const WALLET_METHODS = Object.freeze(['eth_accounts', 'eth_chainId', 'eth
 export function createOnboarding(onChange = () => {}) {
   let state = { provider: null, account: null, chainId: null, balance: null, gasPrice: null, checkedAt: null, busy: false, error: '' };
   let generation = 0;
+  let selectionVersion = 0;
   let unsubscribe = () => {};
   const publish = (patch) => { state = { ...state, ...patch }; onChange({ ...state }); };
   const request = (provider, method, params) => {
     if (!WALLET_METHODS.includes(method)) throw new Error('Unsupported wallet method');
     return provider.request(params ? { method, params } : { method });
   };
-  async function refresh() {
+  async function refresh({ chainId: announcedChain } = {}) {
     const provider = state.provider;
     const ticket = ++generation;
-    publish({ busy: !!provider, account: null, chainId: null, balance: null, gasPrice: null, checkedAt: null, error: '' });
+    // A chainChanged payload is authoritative for this update. Invalidate Arc
+    // values synchronously, before any RPC (which may still return cached data).
+    publish({ busy: !!provider, account: announcedChain === undefined ? null : state.account,
+      chainId: announcedChain ?? null, balance: null, gasPrice: null, checkedAt: null, error: '' });
     if (!provider) return;
     try {
-      const [accounts, chain] = await Promise.all([request(provider, 'eth_accounts'), request(provider, 'eth_chainId')]);
+      const [accounts, chainId] = await Promise.all([
+        request(provider, 'eth_accounts'),
+        announcedChain === undefined ? request(provider, 'eth_chainId').then(value => Number(quantity(value))) : announcedChain,
+      ]);
       if (ticket !== generation) return;
       if (!Array.isArray(accounts) || accounts.some(a => typeof a !== 'string' || !/^0x[0-9a-f]{40}$/i.test(a))) throw new Error('Invalid wallet account');
-      const chainId = Number(quantity(chain));
       publish({ account: accounts[0] || null, chainId });
       if (!accounts.length || chainId !== ARC_MAINNET.chainId) return;
       const [balance, gasPrice] = await Promise.allSettled([
@@ -75,13 +81,28 @@ export function createOnboarding(onChange = () => {}) {
     getState: () => ({ ...state }), refresh, connect: () => action('connect'), switchChain: () => action('switch'),
     async select(provider) {
       unsubscribe();
+      const version = ++selectionVersion;
       ++generation;
       publish({ provider, account: null, chainId: null, balance: null, gasPrice: null, checkedAt: null, busy: false, error: '' });
-      const handlers = ['accountsChanged', 'chainChanged', 'disconnect'].map(event => [event, () => { void refresh(); }]);
+      const active = () => state.provider === provider && selectionVersion === version;
+      const handlers = [
+        ['accountsChanged', () => { if (active()) void refresh(); }],
+        ['chainChanged', chain => {
+          if (!active()) return;
+          let chainId;
+          try { chainId = Number(quantity(chain)); } catch { /* Requery malformed legacy events. */ }
+          void refresh({ chainId });
+        }],
+        ['disconnect', () => {
+          if (!active()) return;
+          ++generation;
+          publish({ account: null, chainId: null, balance: null, gasPrice: null, checkedAt: null, busy: false, error: '' });
+        }],
+      ];
       for (const [event, fn] of handlers) provider?.on?.(event, fn);
       unsubscribe = () => { for (const [event, fn] of handlers) provider?.removeListener?.(event, fn); };
       await refresh();
     },
-    dispose() { ++generation; unsubscribe(); },
+    dispose() { ++generation; ++selectionVersion; unsubscribe(); },
   };
 }
