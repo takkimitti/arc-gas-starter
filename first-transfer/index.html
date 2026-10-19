@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="description" content="First Transfer on Arc Testnet — review a recipient and amount, confirm in your wallet, and verify the USDC receipt." />
+    <title>Arc Gas Starter — First Transfer (Testnet)</title>
+    <link rel="stylesheet" href="../src/styles.css" />
+    <link rel="stylesheet" href="../src/transfer-styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="hero">
+        <p class="eyebrow">ARC TESTNET · FIRST TRANSFER</p>
+        <p class="eyebrow" style="color:#f59e0b;font-size:0.7rem;letter-spacing:0.05em">RPC-DIAG-2</p>
+        <h1>First Transfer</h1>
+        <p class="intro">Enter a recipient and amount, review the full details, confirm in your wallet, and verify the on-chain receipt.</p>
+        <p class="notice-testnet" role="note">
+          <strong>Arc Testnet only.</strong>
+          This module uses Arc Testnet (chain ID 5042002). No real funds.
+          Connect a wallet funded from the <a href="https://faucet.circle.com" target="_blank" rel="noopener noreferrer">Circle testnet faucet</a>.
+          <br>
+          <a href="../index.html" class="text-link">← Back to Guided Onboarding (v0.2)</a>
+        </p>
+      </header>
+
+      <!-- ═══════════════════════════════════════════════════════════════════
+           Wallet panel
+      ═════════════════════════════════════════════════════════════════════ -->
+      <section class="panel" aria-labelledby="wallet-heading" id="wallet-panel">
+        <div class="wallet-picker">
+          <label for="ft-wallet-select">Wallet</label>
+          <select id="ft-wallet-select" disabled><option>No wallet detected</option></select>
+        </div>
+
+        <!-- Status row -->
+        <dl class="status-grid status-grid--compact">
+          <div class="status-card">
+            <dt>Network</dt>
+            <dd id="ft-network-value">—</dd>
+          </div>
+          <div class="status-card">
+            <dt>Account</dt>
+            <dd id="ft-account-value">Not connected</dd>
+          </div>
+          <div class="status-card">
+            <dt>Balance</dt>
+            <dd id="ft-balance-value">—</dd>
+            <p class="hint">Native USDC (18 dec). Same pool as ERC-20 USDC.</p>
+          </div>
+        </dl>
+
+        <!-- Wrong network prompt -->
+        <div id="ft-wrong-network" hidden>
+          <p id="ft-wrong-network-msg" class="message error" role="status"></p>
+          <button id="ft-switch-btn" class="primary-button" type="button">Switch to Arc Testnet</button>
+        </div>
+      </section>
+
+      <!-- ═══════════════════════════════════════════════════════════════════
+           Transfer form
+      ═════════════════════════════════════════════════════════════════════ -->
+      <section class="panel" id="transfer-panel" aria-labelledby="transfer-heading">
+        <div class="next-step">
+          <h2 id="transfer-heading">Transfer</h2>
+
+          <!-- Step indicator -->
+          <ol class="transfer-steps" aria-label="Transfer steps">
+            <li id="step-input"    data-status="current"  aria-current="step">1. Input</li>
+            <li id="step-review"   data-status="pending">2. Review</li>
+            <li id="step-pending"  data-status="pending">3. Pending</li>
+            <li id="step-result"   data-status="pending">4. Result</li>
+          </ol>
+
+          <!-- ── Phase: INPUT ── -->
+          <div id="phase-input">
+            <div class="form-field">
+              <label for="ft-recipient">Recipient address</label>
+              <input
+                id="ft-recipient"
+                type="text"
+                inputmode="text"
+                autocomplete="off"
+                autocorrect="off"
+                spellcheck="false"
+                placeholder="0x…"
+                aria-describedby="ft-recipient-hint"
+              />
+              <p id="ft-recipient-hint" class="hint">Full 0x… address. Pasted addresses are not pre-filled or trusted.</p>
+            </div>
+
+            <div class="form-field">
+              <label for="ft-amount">Amount (USDC)</label>
+              <input
+                id="ft-amount"
+                type="text"
+                inputmode="decimal"
+                autocomplete="off"
+                autocorrect="off"
+                spellcheck="false"
+                placeholder="0.1"
+                aria-describedby="ft-amount-hint"
+              />
+              <p id="ft-amount-hint" class="hint">
+                Arc native USDC uses 18 decimals for msg.value.
+                Enter a decimal amount (e.g. 0.5). Up to 18 decimal places.
+                Amounts are integer-parsed; precision loss is rejected.
+              </p>
+            </div>
+
+            <p id="ft-input-error" class="message error" role="alert" hidden></p>
+            <button id="ft-review-btn" class="primary-button" type="button" disabled>Review transfer</button>
+          </div>
+
+          <!-- ── Phase: REVIEW ── -->
+          <div id="phase-review" hidden>
+            <p class="phase-label">Review all details before confirming.</p>
+            <dl class="review-grid">
+              <div class="review-row">
+                <dt>Recipient (full)</dt>
+                <dd id="rv-recipient" class="monospace"></dd>
+              </div>
+              <div class="review-row">
+                <dt>Contract address (full)</dt>
+                <dd id="rv-contract" class="monospace"></dd>
+              </div>
+              <div class="review-row">
+                <dt>Chain</dt>
+                <dd id="rv-chain"></dd>
+              </div>
+              <div class="review-row">
+                <dt>Amount</dt>
+                <dd id="rv-amount"></dd>
+              </div>
+              <div class="review-row">
+                <dt>Estimated gas</dt>
+                <dd id="rv-gas"></dd>
+              </div>
+              <div class="review-row">
+                <dt>Total (amount + gas estimate)</dt>
+                <dd id="rv-total"></dd>
+              </div>
+            </dl>
+            <p class="hint">
+              Fee is an estimate. Actual fee may be lower.
+              Any change in account, chain, recipient, or amount will require a new review.
+            </p>
+            <p id="ft-review-error" class="message error" role="alert" hidden></p>
+            <div class="button-row">
+              <button id="ft-back-btn"    class="secondary-button" type="button">Back</button>
+              <button id="ft-confirm-btn" class="primary-button"   type="button">Confirm in wallet</button>
+            </div>
+          </div>
+
+          <!-- ── Phase: PENDING ── -->
+          <div id="phase-pending" hidden>
+            <p class="phase-label">Transaction submitted. Waiting for confirmation…</p>
+            <dl class="review-grid">
+              <div class="review-row">
+                <dt>Transaction hash</dt>
+                <dd id="pend-txhash" class="monospace"></dd>
+              </div>
+              <div class="review-row">
+                <dt>Explorer</dt>
+                <dd><a id="pend-explorer" href="#" target="_blank" rel="noopener noreferrer" class="text-link">View on Arc Testnet Explorer ↗</a></dd>
+              </div>
+            </dl>
+            <p id="ft-pending-error" class="message error" role="alert" hidden></p>
+            <!-- Reconfirm button: visible when tx hash exists but polling was interrupted (#3) -->
+            <button id="ft-reconfirm-btn" class="secondary-button" type="button" hidden>
+              Confirm result (re-check)
+            </button>
+          </div>
+
+          <!-- ── Phase: SUCCESS ── -->
+          <div id="phase-success" hidden>
+            <p class="phase-label success-label">Transfer verified.</p>
+            <p class="hint">
+              Receipt status, transaction from/to/value, and the contract's
+              <code>Transferred(sender, recipient, amount)</code> event all match.
+            </p>
+            <dl class="review-grid">
+              <div class="review-row">
+                <dt>Transaction hash</dt>
+                <dd id="succ-txhash" class="monospace"></dd>
+              </div>
+              <div class="review-row">
+                <dt>Explorer</dt>
+                <dd><a id="succ-explorer" href="#" target="_blank" rel="noopener noreferrer" class="text-link">View on Arc Testnet Explorer ↗</a></dd>
+              </div>
+              <div class="review-row">
+                <dt>Verified: sender</dt>
+                <dd id="succ-sender" class="monospace"></dd>
+              </div>
+              <div class="review-row">
+                <dt>Verified: recipient</dt>
+                <dd id="succ-recipient" class="monospace"></dd>
+              </div>
+              <div class="review-row">
+                <dt>Verified: amount</dt>
+                <dd id="succ-amount"></dd>
+              </div>
+            </dl>
+            <button id="ft-new-btn" class="secondary-button" type="button">Start a new transfer</button>
+          </div>
+
+          <!-- ── Phase: FAILED ── -->
+          <div id="phase-failed" hidden>
+            <p class="phase-label failed-label">Transfer failed or verification error.</p>
+            <dl class="review-grid" id="fail-details-grid">
+              <div class="review-row" id="fail-txhash-row" hidden>
+                <dt>Transaction hash</dt>
+                <dd id="fail-txhash" class="monospace"></dd>
+              </div>
+              <div class="review-row" id="fail-explorer-row" hidden>
+                <dt>Explorer</dt>
+                <dd><a id="fail-explorer" href="#" target="_blank" rel="noopener noreferrer" class="text-link">View on Arc Testnet Explorer ↗</a></dd>
+              </div>
+            </dl>
+            <p id="ft-fail-error" class="message error" role="alert"></p>
+            <button id="ft-retry-btn" class="secondary-button" type="button">Start a new transfer</button>
+          </div>
+
+        </div><!-- .next-step -->
+      </section>
+
+      <!-- Safety note — mirrors v0.2 pattern -->
+      <p class="safety-note">
+        This module uses Arc Testnet only. It reads wallet state, estimates gas, and submits one transaction per explicit user confirmation.
+        It does not store wallet addresses or send analytics.
+        Permitted RPC methods on this page:
+        <code>eth_accounts</code>, <code>eth_chainId</code>, <code>eth_getBalance</code>,
+        <code>eth_getCode</code>, <code>eth_estimateGas</code>, <code>eth_gasPrice</code>,
+        <code>eth_sendTransaction</code>, <code>eth_getTransactionReceipt</code>,
+        <code>eth_getTransactionByHash</code>,
+        <code>wallet_switchEthereumChain</code>, <code>wallet_addEthereumChain</code>.
+      </p>
+      <noscript><p>Enable JavaScript to use the transfer UI.</p></noscript>
+    </main>
+
+    <script type="module" src="../src/transfer-app.js?v=1792426720"></script>
+  </body>
+</html>

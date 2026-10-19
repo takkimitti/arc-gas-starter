@@ -244,3 +244,6 @@ a.primary-button { display: inline-block; text-decoration: none; min-height: 44p
 .hint { line-height: 1.6; }
 @media (max-width: 620px) { .steps { grid-template-columns: repeat(2, 1fr); } .check-row, .wallet-picker { flex-direction: column; align-items: stretch; } }
 @media (prefers-reduced-motion: reduce) { button { transition: none; } button:hover:not(:disabled) { transform: none; } }
+.first-transfer-link-note { margin: 24px 0; padding: 16px 20px; border: 1px solid #3a3060; border-radius: 12px; background: #0f0e1a; line-height: 1.6; }
+.first-transfer-link-note p { margin: 0 0 6px; color: #c6c8d1; font-size: 0.92rem; }
+.first-transfer-link-note .text-link { font-size: 0.92rem; }

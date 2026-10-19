@@ -1,0 +1,13 @@
+{
+  "network": "Arc Testnet",
+  "chainId": 5042002,
+  "contract": "0xcf817658c783e9222bd2c60bdd0a068bdca73f58",
+  "deploymentTxReportedByStudio": "0xe4d486d8204c2a769e51bd5254a433ce68847e6d7665e4ae64c9c53556414e60",
+  "rpcVerifiedTransfer": "0xb91d25353e4edbdddd6d9d71df9ba9fb389bf713961cb90a13cbe50790d5f151",
+  "screenshotTransfer": "0x3400f9ef8a229435917192b23bd3df71511407dd99e0a701f7bd14a5995c88ca",
+  "screenshotTransferVerification": "RPC receipt status 0x1 verified; see rpc-evidence.json",
+  "sender": "0x65711023281eea54dab0ca662ccb8b10c9902877",
+  "recipient": "0x65711023281eea54dab0ca662ccb8b10c9902877",
+  "amountNativeBaseUnits": "10000000000000000",
+  "mainnetEvidence": false
+}

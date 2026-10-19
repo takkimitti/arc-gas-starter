@@ -1,2 +1,14 @@
 dist/
 .DS_Store
+
+# First Transfer development artifacts
+contracts/out/
+contracts/cache/
+node_modules/
+.env
+.env.*
+!.env.example
+r6-import/
+*.zip
+*.b64
+CHECKSUMS.txt
