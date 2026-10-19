@@ -1,0 +1,165 @@
+/**
+ * transfer-styles.css — Additional styles for the First Transfer page.
+ * Inherits all variables and base styles from styles.css.
+ * Appended after styles.css in the HTML; no existing rules are modified.
+ */
+
+/* ── Testnet notice bar ─────────────────────────────────────────────────── */
+.notice-testnet {
+  margin: 18px 0 0;
+  padding: 12px 16px;
+  border: 1px solid #3a3060;
+  border-radius: 10px;
+  background: #1a1840;
+  color: #c6c8d1;
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+.notice-testnet strong { color: #ffd58a; }
+.notice-testnet a      { color: #aaa7ff; }
+
+/* ── Transfer step indicator (4 steps, compact) ──────────────────────────── */
+.transfer-steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 28px;
+}
+.transfer-steps li {
+  padding: 10px 12px;
+  border: 1px solid #515561;
+  border-radius: 10px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #767986;
+}
+.transfer-steps [data-status="current"] {
+  border: 2px solid #b4b0ff;
+  background: #242044;
+  color: #e6e4ff;
+}
+.transfer-steps [data-status="complete"] {
+  border-color: #9df1b4;
+  color: #9df1b4;
+}
+@media (max-width: 520px) {
+  .transfer-steps { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ── Form fields ────────────────────────────────────────────────────────── */
+.form-field {
+  margin-bottom: 20px;
+}
+.form-field label {
+  display: block;
+  margin-bottom: 8px;
+  color: #898c98;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.form-field input[type="text"] {
+  display: block;
+  width: 100%;
+  padding: 12px 14px;
+  background: #1a1c24;
+  color: #f6f7fb;
+  border: 1px solid #3a3d4a;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 1rem;
+  min-height: 44px;
+  outline: none;
+  transition: border-color 120ms ease;
+}
+.form-field input[type="text"]:focus {
+  border-color: #8c87ff;
+  outline: none;
+}
+.form-field input[type="text"]::placeholder {
+  color: #54576a;
+}
+
+/* ── Review grid ─────────────────────────────────────────────────────────── */
+.review-grid {
+  margin: 0 0 20px;
+  border: 1px solid #272a33;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.review-row {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 0;
+  border-bottom: 1px solid #272a33;
+  align-items: baseline;
+}
+.review-row:last-child { border-bottom: 0; }
+.review-row dt {
+  padding: 14px 16px;
+  background: #111318;
+  color: #898c98;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-right: 1px solid #272a33;
+}
+.review-row dd {
+  padding: 14px 16px;
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  letter-spacing: 0;
+}
+@media (max-width: 580px) {
+  .review-row { grid-template-columns: 1fr; }
+  .review-row dt { border-right: 0; border-bottom: 1px solid #272a33; }
+}
+
+/* ── Monospace values ────────────────────────────────────────────────────── */
+.monospace {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 0.88rem !important;
+  letter-spacing: 0 !important;
+  word-break: break-all;
+}
+
+/* ── Phase labels ─────────────────────────────────────────────────────────── */
+.phase-label {
+  margin: 0 0 20px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #c6c8d1;
+}
+.success-label { color: #9df1b4; }
+.failed-label  { color: #ffd3d3; }
+
+/* ── Button row ──────────────────────────────────────────────────────────── */
+.button-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* ── Compact status grid ──────────────────────────────────────────────────── */
+.status-grid--compact {
+  grid-template-columns: repeat(3, 1fr);
+}
+.status-grid--compact .status-card {
+  min-height: 100px;
+}
+@media (max-width: 620px) {
+  .status-grid--compact { grid-template-columns: 1fr; }
+  .status-grid--compact .status-card { min-height: auto; }
+}
+
+/* ── Wrong network prompt ─────────────────────────────────────────────────── */
+#ft-wrong-network {
+  padding: 20px 24px 24px;
+  border-top: 1px solid #272a33;
+}

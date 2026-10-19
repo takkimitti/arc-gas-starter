@@ -1,6 +1,6 @@
 # Arc Gas Starter — First Transfer / Arc Studio Microgrant
 
-Status: preparation only. Not submitted. No Studio build, contract deployment, mainnet transaction or video is claimed by this document.
+Status: First Transfer implemented in Arc Studio and tested on Arc Testnet. Testnet deployment and transfer evidence are saved in docs/evidence/testnet-20261020/. No mainnet deployment, mainnet transaction, public production app, video or grant submission is claimed. The original planning instructions below are retained as historical context; they are not the current implementation status.
 
 ## Official entry points
 
